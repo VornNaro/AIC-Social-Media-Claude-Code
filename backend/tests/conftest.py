@@ -84,3 +84,34 @@ async def user(client) -> dict:
 async def auth_client(client, user) -> AsyncClient:
     client.headers["Authorization"] = f"Bearer {user['access_token']}"
     return client
+
+
+@pytest_asyncio.fixture
+async def second_user(client) -> dict:
+    """A second registered user (for ownership / multi-user tests)."""
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "carol",
+            "email": "carol@example.com",
+            "password": "password123",
+            "display_name": "Carol",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def auth_header(token_holder: dict) -> dict:
+    """Build an Authorization header from a register/login response."""
+    return {"Authorization": f"Bearer {token_holder['access_token']}"}
+
+
+@pytest_asyncio.fixture
+async def post(client, user) -> dict:
+    """A post authored by `user` (alice). Uses explicit auth, not the shared header."""
+    resp = await client.post(
+        "/api/v1/posts", json={"content": "Hello world"}, headers=auth_header(user)
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()

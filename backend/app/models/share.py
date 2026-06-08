@@ -24,5 +24,6 @@ class Share(Base, CreatedAtMixin):
     # One repost per user per post → idempotent share.
     __table_args__ = (
         UniqueConstraint("user_id", "post_id", name="uq_shares_user_post"),
-        Index("ix_shares_created", "created_at"),
+        # (created_at, id) so the feed's keyset tiebreak on event_id is index-backed.
+        Index("ix_shares_created", "created_at", "id"),
     )

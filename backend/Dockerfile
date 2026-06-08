@@ -9,10 +9,12 @@ WORKDIR /app
 
 # Copy source then install (hatchling needs the `app` package present to build)
 COPY . .
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir . \
+    && chmod +x docker-entrypoint.sh
 
 EXPOSE 8000
 
-# Phase 1: run the API directly. Phase 2 will switch this to an entrypoint that
-# runs `alembic upgrade head` before starting uvicorn (once migrations exist).
+# Entrypoint runs `alembic upgrade head` before the command, so the schema is
+# always current on container start.
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

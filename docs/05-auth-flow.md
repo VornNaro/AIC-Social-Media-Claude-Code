@@ -97,3 +97,12 @@ Server components needing data: read cookies via `cookies()` and call FastAPI di
 ## Testing notes
 
 pytest talks to FastAPI directly with Bearer headers (no cookies involved). The cookie layer is exercised manually in the browser (Phase 6 verification): devtools → Application → Cookies must show both tokens as httpOnly.
+
+## Security review — accepted v1 tradeoffs
+
+An independent security audit (Phase 3) confirmed the core design is sound (pinned JWT algorithm, dual-secret + verified `type` claim so access/refresh aren't interchangeable, enforced expiry, rotation with reuse-all-revoke, inactive-user blocking on the refresh path, no secret/PII leakage, required secrets with no insecure defaults). Two findings were fixed: CORS no longer uses credentialed mode and refuses a `*` origin (`main.py`); login password length is now bounded (`schemas/auth.py`). The following are **knowingly accepted for v1**:
+
+- **Register enumeration** — distinct 409 messages reveal whether a username/email exists. This is the usual UX tradeoff for "username taken" feedback. Login stays generic.
+- **bcrypt 72-byte truncation** — passwords are capped at 128 chars but bcrypt only reads the first 72 bytes. Acceptable; revisit with SHA-256 pre-hashing if needed.
+- **Refresh rotation race** — the check-then-revoke isn't atomic under concurrent use of the *same* token (both are the legitimate holder). Harmless here; a conditional `UPDATE ... WHERE revoked=false` would make it atomic later.
+- **Refresh-token cleanup** — expired `refresh_tokens` rows aren't purged (volume is trivial for this project).

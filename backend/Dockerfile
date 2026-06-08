@@ -7,9 +7,10 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Copy source then install (hatchling needs the `app` package present to build)
+# Copy source then install (hatchling needs the `app` package present to build).
+# Dev extras (pytest, ruff, httpx) are included so the same image runs the tests.
 COPY . .
-RUN pip install --no-cache-dir . \
+RUN pip install --no-cache-dir ".[dev]" \
     && chmod +x docker-entrypoint.sh
 
 EXPOSE 8000

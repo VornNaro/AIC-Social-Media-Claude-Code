@@ -2,18 +2,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.api.routers import auth
 from app.core.config import settings
 from app.core.database import engine
 
 app = FastAPI(title="Social Hub API", version="0.1.0")
 
+# FastAPI is a pure Bearer API — tokens travel in the Authorization header, not
+# cookies (the Next.js proxy owns cookies, server-side, where CORS doesn't apply).
+# So we do NOT enable credentialed CORS, and we refuse a wildcard origin to avoid
+# ever reflecting "*" back to browsers.
+_cors_origins = settings.cors_origins_list
+if "*" in _cors_origins:
+    raise RuntimeError("CORS_ORIGINS must list explicit origins, not '*'.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])

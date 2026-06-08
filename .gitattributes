@@ -1,0 +1,7 @@
+# Force LF for shell scripts so the Docker entrypoint works on Linux even when
+# cloned on Windows (CRLF would break the `#!/bin/sh` interpreter).
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Normalize line endings for text; let git decide for the rest.
+* text=auto

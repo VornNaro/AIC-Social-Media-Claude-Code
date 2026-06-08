@@ -1,0 +1,7 @@
+# Dev hot-reload overrides — auto-applied by `docker compose up`.
+# Bind-mounts the source so uvicorn --reload picks up edits without rebuilding.
+services:
+  backend:
+    volumes:
+      - ./backend/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

@@ -1,7 +1,11 @@
 import uuid
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+
+# A single hashtag/tag, bounded to the DB column width (ARRAY(String(60))).
+Tag = Annotated[str, StringConstraints(max_length=60)]
 
 
 class AuthorMini(BaseModel):
@@ -23,7 +27,7 @@ class SharedBy(BaseModel):
 class PostCreate(BaseModel):
     content: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
-    tags: list[str] = Field(default_factory=list, max_length=10)
+    tags: list[Tag] = Field(default_factory=list, max_length=10)
     note: str | None = Field(default=None, max_length=120)
 
     @model_validator(mode="after")
@@ -36,7 +40,7 @@ class PostCreate(BaseModel):
 class PostUpdate(BaseModel):
     content: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
-    tags: list[str] | None = Field(default=None, max_length=10)
+    tags: list[Tag] | None = Field(default=None, max_length=10)
     note: str | None = Field(default=None, max_length=120)
 
 

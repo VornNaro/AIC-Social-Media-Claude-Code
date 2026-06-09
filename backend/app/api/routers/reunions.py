@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -32,6 +33,7 @@ async def list_reunions(
             await db.scalars(
                 select(Reunion)
                 .options(selectinload(Reunion.host))
+                .where(Reunion.starts_at >= datetime.now(timezone.utc))
                 .order_by(Reunion.starts_at.asc())
                 .limit(limit)
             )
@@ -104,6 +106,7 @@ async def clear_rsvp(
 async def list_attendees(
     reunion_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[AttendeeOut]:
     rows = (
         await db.execute(

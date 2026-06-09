@@ -12,10 +12,11 @@ export function useSuggestions(limit = 5) {
   });
 }
 
-export function useConnections() {
+export function useConnections(enabled = true) {
   return useQuery({
     queryKey: ["connections"],
     queryFn: () => api<ClassmateOut[]>("/connections"),
+    enabled,
   });
 }
 

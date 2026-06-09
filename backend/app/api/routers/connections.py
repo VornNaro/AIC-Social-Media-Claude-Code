@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -156,14 +157,23 @@ async def request_connection(
         )
     )
     if existing is not None:
-        # If they already requested me, this accepts it. Otherwise idempotent.
         if (
             existing.status == ConnectionStatus.PENDING
             and existing.addressee_id == current_user.id
         ):
+            # They already requested me — accept it.
             existing.status = ConnectionStatus.ACCEPTED
-            await db.commit()
-            await db.refresh(existing)
+        elif existing.status == ConnectionStatus.DECLINED:
+            # A prior decline shouldn't permanently block reconnecting: reopen the
+            # request in the current direction.
+            existing.requester_id = current_user.id
+            existing.addressee_id = target_id
+            existing.status = ConnectionStatus.PENDING
+        else:
+            # Already pending (outgoing) or accepted — idempotent.
+            return ConnectionOut.model_validate(existing)
+        await db.commit()
+        await db.refresh(existing)
         return ConnectionOut.model_validate(existing)
 
     conn = Connection(
@@ -172,7 +182,24 @@ async def request_connection(
         status=ConnectionStatus.PENDING,
     )
     db.add(conn)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Raced a concurrent request on the same pair — return the winning row.
+        await db.rollback()
+        conn = await db.scalar(
+            select(Connection).where(
+                or_(
+                    (Connection.requester_id == current_user.id)
+                    & (Connection.addressee_id == target_id),
+                    (Connection.requester_id == target_id)
+                    & (Connection.addressee_id == current_user.id),
+                )
+            )
+        )
+        if conn is None:
+            raise HTTPException(status.HTTP_409_CONFLICT, "Could not create connection") from None
+        return ConnectionOut.model_validate(conn)
     await db.refresh(conn)
     return ConnectionOut.model_validate(conn)
 

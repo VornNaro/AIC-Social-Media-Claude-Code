@@ -15,8 +15,9 @@ export function ProfileClassmates({ username }: { username: string }) {
   const { data: profile } = useProfile(username);
   const { data: me } = useAuth();
   const isMe = me?.username === username;
-  // Only the signed-in user's own connections are listable via the API.
-  const { data: connections } = useConnections();
+  // Only the signed-in user's own connections are listable via the API, so only
+  // fetch them when viewing your own profile.
+  const { data: connections } = useConnections(isMe);
 
   if (isMe) {
     const list = connections ?? [];

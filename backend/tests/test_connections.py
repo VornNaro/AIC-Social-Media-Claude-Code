@@ -44,6 +44,21 @@ async def test_reverse_request_auto_accepts(client, user, second_user):
     assert r.json()["status"] == "ACCEPTED"
 
 
+async def test_duplicate_request_is_idempotent(client, user, second_user):
+    alice, carol = user, second_user
+    body = {"user_id": carol["user"]["id"]}
+    r1 = await client.post("/api/v1/connections", json=body, headers=auth_header(alice))
+    r2 = await client.post("/api/v1/connections", json=body, headers=auth_header(alice))
+    assert r1.status_code == 201, r1.text
+    assert r2.status_code in (200, 201), r2.text  # idempotent, no 500
+    assert r2.json()["status"] == "PENDING"
+    # carol sees exactly one pending request
+    reqs = (
+        await client.get("/api/v1/connections/requests", headers=auth_header(carol))
+    ).json()
+    assert len(reqs) == 1
+
+
 async def test_cannot_connect_to_self(client, user):
     r = await client.post(
         "/api/v1/connections", json={"user_id": user["user"]["id"]},

@@ -63,6 +63,20 @@ async def test_members_directory_filters_by_year(client, user, second_user):
     assert none_2009 == []
 
 
+async def test_members_search_escapes_like_wildcards(client, user, second_user):
+    slug = (await _make_school(client, user)).json()["slug"]
+    await client.post(f"/api/v1/schools/{slug}/join", headers=auth_header(user))
+    await client.post(f"/api/v1/schools/{slug}/join", headers=auth_header(second_user))
+    # "%" is a LIKE wildcard; escaped, it matches only a literal "%", which no
+    # display_name/city contains — so the result is empty, not "everyone".
+    res = (
+        await client.get(
+            f"/api/v1/schools/{slug}/members?q=%25", headers=auth_header(user)
+        )
+    ).json()
+    assert res == []
+
+
 async def test_school_not_found(client, user):
     r = await client.get("/api/v1/schools/nope", headers=auth_header(user))
     assert r.status_code == 404

@@ -4,34 +4,40 @@ import type { CursorPage, PostOut, ReactionType } from "@/types/api";
 
 type InfiniteFeed = { pages: CursorPage<PostOut>[]; pageParams: unknown[] };
 
-// Apply a patch to a post wherever it appears: every ['feed' ...] infinite query
+// Every infinite list of posts a post can appear in: the global/profile feed
+// (['feed', ...]) and a school's Memories tab (['school-posts', slug]).
+const POST_LIST_KEYS = [["feed"], ["school-posts"]] as const;
+
+// Apply a patch to a post wherever it appears: every post-list infinite query
 // and the ['post', id] single-post cache.
 export function patchPost(
   qc: QueryClient,
   postId: string,
   patch: (p: PostOut) => PostOut,
 ): void {
-  qc.setQueriesData<InfiniteFeed>({ queryKey: ["feed"] }, (data) => {
-    if (!data) return data;
-    return {
-      ...data,
-      pages: data.pages.map((page) => ({
-        ...page,
-        items: page.items.map((item) => (item.id === postId ? patch(item) : item)),
-      })),
-    };
-  });
+  for (const queryKey of POST_LIST_KEYS) {
+    qc.setQueriesData<InfiniteFeed>({ queryKey }, (data) => {
+      if (!data) return data;
+      return {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) => (item.id === postId ? patch(item) : item)),
+        })),
+      };
+    });
+  }
   qc.setQueryData<PostOut>(["post", postId], (p) => (p ? patch(p) : p));
 }
 
 export interface PostSnapshot {
-  feed: [QueryKey, unknown][];
+  lists: [QueryKey, unknown][];
   post: unknown;
 }
 
 export function snapshotPostCaches(qc: QueryClient, postId: string): PostSnapshot {
   return {
-    feed: qc.getQueriesData({ queryKey: ["feed"] }),
+    lists: POST_LIST_KEYS.flatMap((queryKey) => qc.getQueriesData({ queryKey })),
     post: qc.getQueryData(["post", postId]),
   };
 }
@@ -41,7 +47,7 @@ export function restorePostCaches(
   postId: string,
   snap: PostSnapshot,
 ): void {
-  for (const [key, data] of snap.feed) qc.setQueryData(key, data);
+  for (const [key, data] of snap.lists) qc.setQueryData(key, data);
   qc.setQueryData(["post", postId], snap.post);
 }
 

@@ -187,9 +187,14 @@ async def list_members(
     if year is not None:
         stmt = stmt.where(User.graduation_year == year)
     if q:
-        like = f"%{q.lower()}%"
+        # Escape LIKE wildcards so a literal % or _ in the query doesn't match all.
+        escaped = q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
         stmt = stmt.where(
-            or_(func.lower(User.display_name).like(like), func.lower(User.city).like(like))
+            or_(
+                func.lower(User.display_name).like(like, escape="\\"),
+                func.lower(User.city).like(like, escape="\\"),
+            )
         )
     stmt = stmt.order_by(User.display_name).limit(limit)
     users = list((await db.scalars(stmt)).all())
@@ -251,6 +256,18 @@ async def create_reunion(
     from app.services.reunions import reunion_out
 
     school = await _get_school(db, slug)
+    is_member = (
+        await db.scalar(
+            select(SchoolMembership.id).where(
+                SchoolMembership.school_id == school.id,
+                SchoolMembership.user_id == current_user.id,
+            )
+        )
+    ) is not None
+    if not is_member:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "Join this school before hosting a reunion"
+        )
     reunion = Reunion(
         school_id=school.id,
         host_id=current_user.id,

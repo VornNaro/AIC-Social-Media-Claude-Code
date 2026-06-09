@@ -11,6 +11,7 @@ class AuthorMini(BaseModel):
     username: str
     display_name: str
     avatar_url: str | None = None
+    graduation_year: int | None = None
 
 
 class SharedBy(BaseModel):
@@ -22,6 +23,8 @@ class SharedBy(BaseModel):
 class PostCreate(BaseModel):
     content: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
+    tags: list[str] = Field(default_factory=list, max_length=10)
+    note: str | None = Field(default=None, max_length=120)
 
     @model_validator(mode="after")
     def require_content_or_image(self) -> "PostCreate":
@@ -33,6 +36,8 @@ class PostCreate(BaseModel):
 class PostUpdate(BaseModel):
     content: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
+    tags: list[str] | None = Field(default=None, max_length=10)
+    note: str | None = Field(default=None, max_length=120)
 
 
 class PostOut(BaseModel):
@@ -40,6 +45,8 @@ class PostOut(BaseModel):
     author: AuthorMini
     content: str | None
     image_url: str | None
+    tags: list[str] = []
+    note: str | None = None
     created_at: datetime
     updated_at: datetime
     reaction_counts: dict[str, int]

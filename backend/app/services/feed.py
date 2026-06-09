@@ -96,6 +96,8 @@ def serialize_post(post: Post, meta: dict, shared_by: SharedBy | None = None) ->
         author=AuthorMini.model_validate(post.author),
         content=post.content,
         image_url=post.image_url,
+        tags=post.tags or [],
+        note=post.note,
         created_at=post.created_at,
         updated_at=post.updated_at,
         reaction_counts=meta["reaction_counts"],
@@ -134,6 +136,43 @@ async def list_authored_posts(
         select(Post)
         .options(selectinload(Post.author))
         .where(Post.author_id == author_id)
+        .order_by(Post.created_at.desc(), Post.id.desc())
+        .limit(limit + 1)
+        .execution_options(populate_existing=True)
+    )
+    if cursor:
+        t, cid = decode_cursor(cursor)
+        stmt = stmt.where(tuple_(Post.created_at, Post.id) < tuple_(t, cid))
+
+    posts = list((await db.scalars(stmt)).all())
+    has_more = len(posts) > limit
+    posts = posts[:limit]
+
+    meta = await _aggregate_meta(db, [p.id for p in posts], current_user)
+    items = [serialize_post(p, meta[p.id]) for p in posts]
+    next_cursor = (
+        encode_cursor(posts[-1].created_at, posts[-1].id) if has_more and posts else None
+    )
+    return CursorPage[PostOut](items=items, next_cursor=next_cursor, has_more=has_more)
+
+
+async def list_school_posts(
+    db: AsyncSession,
+    school_id: uuid.UUID,
+    limit: int,
+    cursor: str | None,
+    current_user: User | None,
+) -> CursorPage[PostOut]:
+    """Posts authored by members of a school (the group "Memories" feed)."""
+    from app.models.school import SchoolMembership
+
+    member_ids = select(SchoolMembership.user_id).where(
+        SchoolMembership.school_id == school_id
+    )
+    stmt = (
+        select(Post)
+        .options(selectinload(Post.author))
+        .where(Post.author_id.in_(member_ids))
         .order_by(Post.created_at.desc(), Post.id.desc())
         .limit(limit + 1)
         .execution_options(populate_existing=True)

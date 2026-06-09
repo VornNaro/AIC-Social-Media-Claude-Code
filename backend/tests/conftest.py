@@ -12,7 +12,10 @@ from app.models import Base
 # Separate test database on the same Postgres server.
 TEST_DB_URL = settings.DATABASE_URL.rsplit("/", 1)[0] + "/socialhub_test"
 
-_TABLES = "users, posts, comments, reactions, shares, refresh_tokens"
+_TABLES = (
+    "users, posts, comments, reactions, shares, refresh_tokens, "
+    "schools, school_memberships, reunions, rsvps, connections"
+)
 
 
 async def _ensure_test_database() -> None:

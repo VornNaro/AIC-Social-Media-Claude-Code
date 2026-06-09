@@ -30,6 +30,8 @@ const schema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   display_name: z.string().max(80).optional(),
+  school_name: z.string().max(160).optional(),
+  graduation_year: z.number().int().min(1900).max(2100).optional(),
 });
 
 export default function RegisterPage() {
@@ -40,11 +42,14 @@ export default function RegisterPage() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const yearRaw = String(form.get("graduation_year") ?? "").trim();
     const values = {
       username: String(form.get("username") ?? "").trim(),
       email: String(form.get("email") ?? "").trim(),
       password: String(form.get("password") ?? ""),
       display_name: String(form.get("display_name") ?? "").trim() || undefined,
+      school_name: String(form.get("school_name") ?? "").trim() || undefined,
+      graduation_year: yearRaw ? Number(yearRaw) : undefined,
     };
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
@@ -66,18 +71,41 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
-        <CardDescription>Join Social Hub in a few seconds.</CardDescription>
+        <CardTitle>Create your SchoolMate account</CardTitle>
+        <CardDescription>
+          Add your school and graduation year, and we&apos;ll start finding your old
+          classmates right away.
+        </CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="display_name">Display name</Label>
-            <Input id="display_name" name="display_name" placeholder="Optional" />
+            <Label htmlFor="display_name">Full name</Label>
+            <Input id="display_name" name="display_name" placeholder="e.g. Aisha Sharma" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input id="username" name="username" autoComplete="username" />
+          </div>
+          <div className="grid grid-cols-[1fr_auto] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="school_name">School name</Label>
+              <Input
+                id="school_name"
+                name="school_name"
+                placeholder="e.g. Chungbuk National University"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="graduation_year">Class of</Label>
+              <Input
+                id="graduation_year"
+                name="graduation_year"
+                type="number"
+                placeholder="2012"
+                className="w-24"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -90,7 +118,7 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="mt-4 flex-col gap-3">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account…" : "Sign up"}
+            {loading ? "Creating your account…" : "Create Account"}
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}

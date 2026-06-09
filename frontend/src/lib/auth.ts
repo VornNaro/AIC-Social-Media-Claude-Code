@@ -8,6 +8,8 @@ export interface RegisterInput {
   email: string;
   password: string;
   display_name?: string;
+  school_name?: string;
+  graduation_year?: number;
 }
 
 export async function login(

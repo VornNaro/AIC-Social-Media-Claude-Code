@@ -2,7 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api.routers import auth, comments, posts, reactions, shares, users
+from app.api.routers import (
+    auth,
+    comments,
+    connections,
+    posts,
+    reactions,
+    reunions,
+    schools,
+    shares,
+    users,
+)
 from app.core.config import settings
 from app.core.database import engine
 
@@ -30,6 +40,9 @@ app.include_router(posts.router, prefix="/api/v1")
 app.include_router(comments.router, prefix="/api/v1")
 app.include_router(reactions.router, prefix="/api/v1")
 app.include_router(shares.router, prefix="/api/v1")
+app.include_router(schools.router, prefix="/api/v1")
+app.include_router(reunions.router, prefix="/api/v1")
+app.include_router(connections.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])

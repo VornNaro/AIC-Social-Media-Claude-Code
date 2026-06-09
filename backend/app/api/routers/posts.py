@@ -47,7 +47,13 @@ async def create_post(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> PostOut:
-    post = Post(author_id=current_user.id, content=body.content, image_url=body.image_url)
+    post = Post(
+        author_id=current_user.id,
+        content=body.content,
+        image_url=body.image_url,
+        tags=body.tags,
+        note=body.note,
+    )
     db.add(post)
     await db.commit()
     await db.refresh(post)
@@ -81,6 +87,10 @@ async def update_post(
         post.content = c.strip() if c and c.strip() else None
     if "image_url" in data:
         post.image_url = data["image_url"] or None
+    if "tags" in data:
+        post.tags = data["tags"] or []
+    if "note" in data:
+        post.note = data["note"] or None
     if post.content is None and post.image_url is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "A post must have content or an image.")
     await db.commit()

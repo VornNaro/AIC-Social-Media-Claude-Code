@@ -15,6 +15,7 @@ from app.core.security import (
     verify_password,
 )
 from app.models.refresh_token import RefreshToken
+from app.models.school import SchoolMembership
 from app.models.user import User
 from app.schemas.auth import (
     AuthResponse,
@@ -25,6 +26,8 @@ from app.schemas.auth import (
     TokenPair,
 )
 from app.schemas.user import UserOut
+from app.services.schools import find_or_create_school
+from app.services.users import build_user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -56,13 +59,22 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)) ->
         email=email,
         hashed_password=hash_password(body.password),
         display_name=body.display_name or body.username,
+        graduation_year=body.graduation_year,
+        avatar_url=body.avatar_url,
     )
     db.add(user)
     await db.flush()  # assign user.id
 
+    # Find-or-create the school by name and join it.
+    if body.school_name and body.school_name.strip():
+        school = await find_or_create_school(db, body.school_name.strip())
+        user.school_id = school.id
+        db.add(SchoolMembership(school_id=school.id, user_id=user.id))
+
     pair = await _issue_token_pair(db, user)
     await db.commit()
-    return AuthResponse(**pair.model_dump(), user=UserOut.model_validate(user))
+    await db.refresh(user)
+    return AuthResponse(**pair.model_dump(), user=await build_user_out(db, user))
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -80,7 +92,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> AuthR
 
     pair = await _issue_token_pair(db, user)
     await db.commit()
-    return AuthResponse(**pair.model_dump(), user=UserOut.model_validate(user))
+    return AuthResponse(**pair.model_dump(), user=await build_user_out(db, user))
 
 
 @router.post("/refresh", response_model=TokenPair)
@@ -137,5 +149,8 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)) -> Non
 
 
 @router.get("/me", response_model=UserOut)
-async def me(current_user: User = Depends(get_current_user)) -> UserOut:
-    return UserOut.model_validate(current_user)
+async def me(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserOut:
+    return await build_user_out(db, current_user)

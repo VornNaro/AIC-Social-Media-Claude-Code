@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { CalendarDays, GraduationCap, Home, LogOut, User as UserIcon } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,21 +31,41 @@ export function Navbar() {
     router.push("/login");
   }
 
+  const schoolHref = user?.school ? `/school/${user.school.slug}` : null;
+
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-xl items-center justify-between px-4">
-        <Link href="/feed" className="text-lg font-bold tracking-tight">
-          Social Hub
+    <header className="sticky top-0 z-40 border-b bg-card/90 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
+        <Link href="/feed" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/schoolmate/logo/schoolmate-mark.png" alt="" className="h-9 w-9" />
+          <span className="text-xl font-extrabold tracking-tight text-foreground">
+            School<span className="text-primary">Mate</span>
+          </span>
         </Link>
-        <div className="flex items-center gap-1">
+
+        <nav className="flex items-center gap-1">
+          <NavLink href="/feed" icon={<Home className="h-5 w-5" />} label="Home" />
+          {schoolHref && (
+            <NavLink
+              href={schoolHref}
+              icon={<GraduationCap className="h-5 w-5" />}
+              label="My School"
+            />
+          )}
+          <NavLink
+            href="/reunions"
+            icon={<CalendarDays className="h-5 w-5" />}
+            label="Reunions"
+          />
           <ThemeToggle />
           {user && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-full outline-none ring-offset-2 focus-visible:ring-2">
+              <DropdownMenuTrigger className="ml-1 rounded-full outline-none ring-offset-2 focus-visible:ring-2">
                 <UserAvatar
                   name={user.display_name}
                   src={user.avatar_url}
-                  className="h-8 w-8"
+                  className="h-9 w-9"
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -63,8 +82,28 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-        </div>
+        </nav>
       </div>
     </header>
+  );
+}
+
+function NavLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </Link>
   );
 }

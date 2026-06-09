@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, uuid_pk
@@ -19,6 +19,12 @@ class Post(Base, TimestampMixin):
     )
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # SchoolMate: hashtags shown under the post, and an optional handwritten
+    # polaroid caption ("note") overlaid on the photo.
+    tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(60)), nullable=False, default=list, server_default="{}"
+    )
+    note: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     author: Mapped["User"] = relationship(back_populates="posts", lazy="noload")
     comments: Mapped[list["Comment"]] = relationship(

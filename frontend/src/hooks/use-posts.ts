@@ -15,6 +15,8 @@ export function usePost(id: string) {
 export interface CreatePostInput {
   content?: string;
   image_url?: string;
+  tags?: string[];
+  note?: string;
 }
 
 export function useCreatePost() {

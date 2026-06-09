@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED_PREFIXES = ["/feed", "/profile", "/post"];
+const PROTECTED_PREFIXES = ["/feed", "/profile", "/post", "/school", "/reunion", "/reunions"];
 const AUTH_PAGES = ["/login", "/register"];
 
 export function proxy(req: NextRequest) {
@@ -29,5 +29,14 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/feed/:path*", "/profile/:path*", "/post/:path*", "/login", "/register"],
+  matcher: [
+    "/feed/:path*",
+    "/profile/:path*",
+    "/post/:path*",
+    "/school/:path*",
+    "/reunion/:path*",
+    "/reunions/:path*",
+    "/login",
+    "/register",
+  ],
 };

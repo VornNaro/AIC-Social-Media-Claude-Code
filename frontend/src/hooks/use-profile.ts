@@ -16,6 +16,11 @@ export interface ProfileUpdate {
   display_name?: string;
   bio?: string;
   avatar_url?: string;
+  cover_url?: string;
+  graduation_year?: number | null;
+  city?: string;
+  role?: string;
+  interests?: string[];
 }
 
 export function useUpdateProfile() {

@@ -38,7 +38,11 @@ export function Feed({ username }: { username?: string }) {
 
   const posts = data?.pages.flatMap((p) => p.items) ?? [];
   if (posts.length === 0) {
-    return <p className="py-10 text-center text-muted-foreground">No posts yet.</p>;
+    return (
+      <p className="py-10 text-center text-muted-foreground">
+        No posts yet. Be the first to share your vibe!
+      </p>
+    );
   }
 
   return (

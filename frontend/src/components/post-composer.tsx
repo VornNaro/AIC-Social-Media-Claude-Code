@@ -48,14 +48,14 @@ export function PostComposer() {
           )}
           <div className="flex-1 space-y-2">
             <Textarea
-              placeholder="What's happening?"
+              placeholder="Share a memory from your school days…"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={3}
             />
             {showImage && (
               <Input
-                placeholder="Image URL (https://…)"
+                placeholder="Paste image URL here…"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
               />
@@ -68,10 +68,10 @@ export function PostComposer() {
                 onClick={() => setShowImage((s) => !s)}
               >
                 <ImageIcon className="mr-2 h-4 w-4" />
-                Image
+                Add Image
               </Button>
               <Button onClick={submit} disabled={createPost.isPending}>
-                {createPost.isPending ? "Posting…" : "Post"}
+                {createPost.isPending ? "Sharing…" : "Share"}
               </Button>
             </div>
           </div>

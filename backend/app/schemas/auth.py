@@ -8,6 +8,10 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     display_name: str | None = Field(default=None, max_length=80)
+    # SchoolMate onboarding: optional school + class year captured at sign-up.
+    school_name: str | None = Field(default=None, max_length=160)
+    graduation_year: int | None = Field(default=None, ge=1900, le=2100)
+    avatar_url: str | None = Field(default=None, max_length=2000)
 
     @field_validator("username")
     @classmethod

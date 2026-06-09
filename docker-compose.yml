@@ -1,5 +1,4 @@
-# Social Hub — base compose. Phase 1: postgres + backend.
-# The frontend service is added in Phase 8.
+# SchoolMate — base compose: postgres + backend + frontend (Phase 8).
 services:
   postgres:
     image: postgres:17-alpine
@@ -22,6 +21,17 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    environment:
+      # Server-side (route handlers / proxy) reach the backend over the compose
+      # network. The browser still talks to the frontend at localhost:3000.
+      API_INTERNAL_URL: http://backend:8000/api/v1
+    ports:
+      - "3000:3000"
 
 volumes:
   pgdata:

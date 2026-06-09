@@ -1,8 +1,24 @@
 # Dev hot-reload overrides — auto-applied by `docker compose up`.
-# Bind-mounts the source so uvicorn --reload picks up edits without rebuilding.
+# Bind-mounts the source so uvicorn --reload / next dev pick up edits without rebuilding.
+# (For the fastest frontend HMR, run `cd frontend && npm run dev` on the host instead.)
 services:
   backend:
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic:/app/alembic
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    # Build only the deps stage (full node_modules incl. the Next CLI), then run
+    # the dev server against the bind-mounted source.
+    build:
+      context: ./frontend
+      target: deps
+    command: npm run dev
+    environment:
+      API_INTERNAL_URL: http://backend:8000/api/v1
+      # File events don't always cross the Windows/Docker bind mount; poll instead.
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules

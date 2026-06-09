@@ -1,0 +1,92 @@
+// TypeScript mirrors of the backend Pydantic schemas.
+// Field names are kept snake_case to match the API exactly (no client renaming).
+
+export type ReactionType = "LIKE" | "LOVE" | "HAHA" | "WOW" | "SAD" | "ANGRY";
+
+export const REACTION_TYPES: ReactionType[] = [
+  "LIKE",
+  "LOVE",
+  "HAHA",
+  "WOW",
+  "SAD",
+  "ANGRY",
+];
+
+export interface AuthorMini {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+}
+
+export interface SharedBy {
+  username: string;
+  display_name: string;
+  shared_at: string;
+}
+
+export interface PostOut {
+  id: string;
+  author: AuthorMini;
+  content: string | null;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
+  reaction_counts: Record<string, number>;
+  my_reaction: ReactionType | null;
+  comment_count: number;
+  share_count: number;
+  shared_by_me: boolean;
+  shared_by: SharedBy | null;
+}
+
+export interface CommentOut {
+  id: string;
+  post_id: string;
+  author: AuthorMini;
+  content: string;
+  created_at: string;
+}
+
+export interface UserOut {
+  id: string;
+  username: string;
+  display_name: string;
+  email: string;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  post_count: number;
+}
+
+export interface CursorPage<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface ReactionState {
+  my_reaction: ReactionType | null;
+  reaction_counts: Record<string, number>;
+}
+
+export interface ShareState {
+  share_count: number;
+  shared_by_me: boolean;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  user: UserOut;
+}

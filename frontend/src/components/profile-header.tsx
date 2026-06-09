@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { Briefcase, GraduationCap, MapPin } from "lucide-react";
+import { GraduationCap, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -169,32 +169,7 @@ export function ProfileHeader({ username }: { username: string }) {
               {profile.city}
             </span>
           )}
-          {profile.role && (
-            <span className="flex items-center gap-1.5">
-              <Briefcase className="h-4 w-4" />
-              {profile.role}
-            </span>
-          )}
         </div>
-
-        {profile.bio && (
-          <p className="mt-3 max-w-prose whitespace-pre-wrap break-words leading-relaxed">
-            {profile.bio}
-          </p>
-        )}
-
-        {profile.interests.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {profile.interests.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-secondary-foreground"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
 
         <div className="mt-4 flex gap-8 border-t pt-4">
           <Stat n={profile.post_count} label="Memories" />

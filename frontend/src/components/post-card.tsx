@@ -86,6 +86,7 @@ export function PostCard({ post }: { post: PostOut }) {
         <ReactionBar post={post} />
         <Button
           render={<Link href={`/post/${post.id}`} />}
+          nativeButton={false}
           variant="ghost"
           size="sm"
           className="flex-1 gap-1.5"

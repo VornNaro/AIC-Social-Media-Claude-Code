@@ -40,7 +40,7 @@ export function Feed({ username }: { username?: string }) {
   if (posts.length === 0) {
     return (
       <p className="py-10 text-center text-muted-foreground">
-        No posts yet. Be the first to share your vibe!
+        No memories shared yet — be the first!
       </p>
     );
   }

@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -69,7 +70,9 @@ export function Navbar() {
                 />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>@{user.username}</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>@{user.username}</DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem render={<Link href={`/profile/${user.username}`} />}>
                   <UserIcon className="mr-2 h-4 w-4" />

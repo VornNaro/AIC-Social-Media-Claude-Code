@@ -9,7 +9,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </span>
       </div>
       {children}
-      <p className="font-hand text-lg text-brand-blue">Some bonds never fade. ♥</p>
     </div>
   );
 }

@@ -11,12 +11,7 @@ from app.core.database import get_db
 from app.models.reunion import Reunion, Rsvp, RsvpStatus
 from app.models.user import User
 from app.schemas.reunion import AttendeeOut, ReunionOut, RsvpIn
-from app.services.reunions import (
-    _going_counts,
-    _my_rsvps,
-    _serialize,
-    get_reunion_out,
-)
+from app.services.reunions import assemble_reunions, get_reunion_out
 
 router = APIRouter(tags=["reunions"])
 
@@ -39,10 +34,7 @@ async def list_reunions(
             )
         ).all()
     )
-    ids = [r.id for r in reunions]
-    going = await _going_counts(db, ids)
-    mine = await _my_rsvps(db, ids, current_user)
-    return [_serialize(r, going.get(r.id, 0), mine.get(r.id)) for r in reunions]
+    return await assemble_reunions(db, reunions, current_user)
 
 
 @router.get("/reunions/{reunion_id}", response_model=ReunionOut)

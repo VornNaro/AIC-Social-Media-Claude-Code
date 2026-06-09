@@ -4,20 +4,13 @@ import Link from "next/link";
 
 import { CalendarDays, Check, MapPin, UserPlus } from "lucide-react";
 
+import { ReunionDateBadge } from "@/components/reunion-date-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
 import { useConnect, useSuggestions } from "@/hooks/use-connections";
 import { useUpcomingReunions } from "@/hooks/use-reunions";
 import type { ClassmateOut } from "@/types/api";
-
-function monthDay(iso: string): { mon: string; day: string } {
-  const d = new Date(iso);
-  return {
-    mon: d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase(),
-    day: String(d.getUTCDate()),
-  };
-}
 
 function SuggestionRow({ s }: { s: ClassmateOut }) {
   const connect = useConnect();
@@ -76,30 +69,22 @@ export function FeedRail() {
         <CardContent className="space-y-3 p-5">
           <h2 className="text-base font-extrabold">Upcoming reunions</h2>
           {reunions.data?.length ? (
-            reunions.data.map((r) => {
-              const { mon, day } = monthDay(r.starts_at);
-              return (
-                <Link
-                  key={r.id}
-                  href={`/reunion/${r.id}`}
-                  className="flex items-center gap-3 rounded-xl border p-2.5 transition-colors hover:bg-accent"
-                >
-                  <div className="w-12 shrink-0 rounded-lg bg-primary/15 py-1.5 text-center">
-                    <div className="text-[10px] font-extrabold tracking-wider text-primary">
-                      {mon}
-                    </div>
-                    <div className="text-lg font-extrabold leading-none">{day}</div>
+            reunions.data.map((r) => (
+              <Link
+                key={r.id}
+                href={`/reunion/${r.id}`}
+                className="flex items-center gap-3 rounded-xl border p-2.5 transition-colors hover:bg-accent"
+              >
+                <ReunionDateBadge startsAt={r.starts_at} />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold">{r.title}</div>
+                  <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    {r.venue ?? r.city} · {r.going_count} going
                   </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-bold">{r.title}</div>
-                    <div className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {r.venue ?? r.city} · {r.going_count} going
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
+                </div>
+              </Link>
+            ))
           ) : (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4" /> No reunions yet.

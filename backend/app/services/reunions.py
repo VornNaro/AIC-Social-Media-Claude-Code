@@ -66,12 +66,20 @@ def _serialize(reunion: Reunion, going: int, my_rsvp: RsvpStatus | None) -> Reun
     )
 
 
+async def assemble_reunions(
+    db: AsyncSession, reunions: list[Reunion], current_user: User | None
+) -> list[ReunionOut]:
+    """Populate going-counts + my-RSVP for a list of (host-loaded) reunions."""
+    ids = [r.id for r in reunions]
+    going = await _going_counts(db, ids)
+    mine = await _my_rsvps(db, ids, current_user)
+    return [_serialize(r, going.get(r.id, 0), mine.get(r.id)) for r in reunions]
+
+
 async def reunion_out(
     db: AsyncSession, reunion: Reunion, current_user: User | None
 ) -> ReunionOut:
-    going = (await _going_counts(db, [reunion.id]))[reunion.id]
-    my = (await _my_rsvps(db, [reunion.id], current_user)).get(reunion.id)
-    return _serialize(reunion, going, my)
+    return (await assemble_reunions(db, [reunion], current_user))[0]
 
 
 async def get_reunion_out(
@@ -101,7 +109,4 @@ async def list_reunions_for_school(
             )
         ).all()
     )
-    ids = [r.id for r in reunions]
-    going = await _going_counts(db, ids)
-    mine = await _my_rsvps(db, ids, current_user)
-    return [_serialize(r, going.get(r.id, 0), mine.get(r.id)) for r in reunions]
+    return await assemble_reunions(db, reunions, current_user)

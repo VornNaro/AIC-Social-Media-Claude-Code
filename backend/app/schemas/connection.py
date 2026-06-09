@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
 from app.models.connection import ConnectionStatus
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class ConnectionRequest(BaseModel):
@@ -37,3 +43,12 @@ class ClassmateOut(BaseModel):
     # one of: none | pending_outgoing | pending_incoming | connected (relative to me)
     connection_state: str = "none"
     mutual_count: int = 0
+
+    @classmethod
+    def from_user(
+        cls, user: User, *, connection_state: str = "none", mutual_count: int = 0
+    ) -> ClassmateOut:
+        """Build from a User ORM row, layering on my connection state with them."""
+        return cls.model_validate(user).model_copy(
+            update={"connection_state": connection_state, "mutual_count": mutual_count}
+        )

@@ -34,17 +34,7 @@ async def _accepted_neighbor_ids(db: AsyncSession, user_id: uuid.UUID) -> set[uu
 
 
 def _classmate(u: User, state: str, mutual: int = 0) -> ClassmateOut:
-    return ClassmateOut(
-        id=u.id,
-        username=u.username,
-        display_name=u.display_name,
-        avatar_url=u.avatar_url,
-        graduation_year=u.graduation_year,
-        city=u.city,
-        role=u.role,
-        connection_state=state,
-        mutual_count=mutual,
-    )
+    return ClassmateOut.from_user(u, connection_state=state, mutual_count=mutual)
 
 
 @router.get("/connections", response_model=list[ClassmateOut])

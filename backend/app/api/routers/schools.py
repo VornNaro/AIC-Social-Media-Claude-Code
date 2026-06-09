@@ -204,16 +204,7 @@ async def list_members(
         states = await _connection_states(db, current_user, [u.id for u in users])
 
     return [
-        ClassmateOut(
-            id=u.id,
-            username=u.username,
-            display_name=u.display_name,
-            avatar_url=u.avatar_url,
-            graduation_year=u.graduation_year,
-            city=u.city,
-            role=u.role,
-            connection_state=states.get(u.id, "none"),
-        )
+        ClassmateOut.from_user(u, connection_state=states.get(u.id, "none"))
         for u in users
     ]
 

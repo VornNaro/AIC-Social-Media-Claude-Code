@@ -124,18 +124,18 @@ async def get_post_out(
     return serialize_post(post, meta[post_id])
 
 
-async def list_authored_posts(
+async def _paginate_posts(
     db: AsyncSession,
-    author_id: uuid.UUID,
+    where: object,
     limit: int,
     cursor: str | None,
     current_user: User | None,
 ) -> CursorPage[PostOut]:
-    """Posts authored by a single user (no reposts), newest first."""
+    """Cursor-paginate authored posts (newest first) matching `where`."""
     stmt = (
         select(Post)
         .options(selectinload(Post.author))
-        .where(Post.author_id == author_id)
+        .where(where)
         .order_by(Post.created_at.desc(), Post.id.desc())
         .limit(limit + 1)
         .execution_options(populate_existing=True)
@@ -154,6 +154,17 @@ async def list_authored_posts(
         encode_cursor(posts[-1].created_at, posts[-1].id) if has_more and posts else None
     )
     return CursorPage[PostOut](items=items, next_cursor=next_cursor, has_more=has_more)
+
+
+async def list_authored_posts(
+    db: AsyncSession,
+    author_id: uuid.UUID,
+    limit: int,
+    cursor: str | None,
+    current_user: User | None,
+) -> CursorPage[PostOut]:
+    """Posts authored by a single user (no reposts), newest first."""
+    return await _paginate_posts(db, Post.author_id == author_id, limit, cursor, current_user)
 
 
 async def list_school_posts(
@@ -169,28 +180,9 @@ async def list_school_posts(
     member_ids = select(SchoolMembership.user_id).where(
         SchoolMembership.school_id == school_id
     )
-    stmt = (
-        select(Post)
-        .options(selectinload(Post.author))
-        .where(Post.author_id.in_(member_ids))
-        .order_by(Post.created_at.desc(), Post.id.desc())
-        .limit(limit + 1)
-        .execution_options(populate_existing=True)
+    return await _paginate_posts(
+        db, Post.author_id.in_(member_ids), limit, cursor, current_user
     )
-    if cursor:
-        t, cid = decode_cursor(cursor)
-        stmt = stmt.where(tuple_(Post.created_at, Post.id) < tuple_(t, cid))
-
-    posts = list((await db.scalars(stmt)).all())
-    has_more = len(posts) > limit
-    posts = posts[:limit]
-
-    meta = await _aggregate_meta(db, [p.id for p in posts], current_user)
-    items = [serialize_post(p, meta[p.id]) for p in posts]
-    next_cursor = (
-        encode_cursor(posts[-1].created_at, posts[-1].id) if has_more and posts else None
-    )
-    return CursorPage[PostOut](items=items, next_cursor=next_cursor, has_more=has_more)
 
 
 async def get_feed(

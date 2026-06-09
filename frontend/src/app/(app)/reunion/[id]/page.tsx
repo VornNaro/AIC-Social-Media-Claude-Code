@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAttendees, useReunion, useRsvp } from "@/hooks/use-reunions";
+import { reunionDate } from "@/lib/utils";
 import type { RsvpStatus } from "@/types/api";
 
 export default function ReunionPage() {
@@ -21,8 +22,7 @@ export default function ReunionPage() {
   if (isLoading || !r) return <Skeleton className="h-96 w-full rounded-2xl" />;
 
   const date = new Date(r.starts_at);
-  const mon = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" }).toUpperCase();
-  const day = date.getUTCDate();
+  const { mon, day } = reunionDate(r.starts_at);
 
   function setRsvp(status: RsvpStatus | null) {
     rsvp.mutate(status, {

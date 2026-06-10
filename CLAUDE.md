@@ -1,6 +1,6 @@
-# Social Hub — Agent Guide
+# SchoolMate — Agent Guide
 
-Monorepo social media app: **Next.js 15** (`frontend/`, port 3000) · **FastAPI** (`backend/`, port 8000, path `/api/v1`) · **PostgreSQL 17** (Docker). Auth = JWT access+refresh pair with rotation; browser stores tokens in **httpOnly cookies set by Next.js route handlers**; FastAPI itself is a pure stateless Bearer API.
+Monorepo **SchoolMate** — a nostalgic alumni reunion network (built on a generic social-app base, then extended with schools, classmate connections, and reunions): **Next.js 16** (`frontend/`, port 3000) · **FastAPI** (`backend/`, port 8000, path `/api/v1`) · **PostgreSQL 17** (Docker). Auth = JWT access+refresh pair with rotation; browser stores tokens in **httpOnly cookies set by Next.js route handlers**; FastAPI itself is a pure stateless Bearer API.
 
 Full specification lives in `docs/` (00-overview … 08-phases). **Read the doc for the phase you're implementing before writing code.** Implementation order and per-phase verification: `docs/08-implementation-phases.md`.
 
@@ -43,9 +43,13 @@ cd frontend && npx shadcn@latest add <name>
 - Refresh-token reuse (revoked/unknown jti) must revoke ALL of that user's refresh tokens — it's a theft signal, and there's a test for it.
 - Alembic autogenerate does not detect added PG enum values — hand-write `ALTER TYPE` migrations for those.
 
-## Scope guardrails (v1)
+## Scope guardrails
 
-No Redis, Celery, microservices, WebSockets, follows/notifications. Images are URL strings (no uploads). Quote-repost (`original_post_id`) and file uploads are documented future extensions — do not build unprompted.
+**In scope and built (SchoolMate domain):** schools/communities + membership, classmate **connections** (request / accept / decline, suggestions), and **reunions** with RSVPs (going / maybe / declined) — on top of the base posts / comments / reactions / shares. Posts carry `tags` (#hashtags) + a handwritten `note`; users carry school / graduation_year / city / role / cover / interests.
+
+**Deferred — do not build unprompted:** direct messaging / reunion discussion threads, saved/bookmarked posts, the profile "memories" timeline. (Connection requests currently allow any user, not just same-school — an open product decision.)
+
+**Out of scope:** Redis, Celery, microservices, WebSockets, push notifications, file uploads (images stay URL strings). Quote-repost (`original_post_id`) remains a future extension.
 
 ## Specialist skills (`.claude/skills/`)
 

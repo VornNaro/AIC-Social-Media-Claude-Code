@@ -20,7 +20,7 @@ interface ApiOptions {
   signal?: AbortSignal;
 }
 
-async function rawRequest<T>(path: string, opts: ApiOptions): Promise<Response> {
+async function rawRequest(path: string, opts: ApiOptions): Promise<Response> {
   return fetch(`/api/proxy${path}`, {
     method: opts.method ?? "GET",
     headers: { "Content-Type": "application/json" },
@@ -39,11 +39,11 @@ async function refresh(): Promise<boolean> {
 }
 
 export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
-  let res = await rawRequest<T>(path, opts);
+  let res = await rawRequest(path, opts);
 
   if (res.status === 401) {
     if (await refresh()) {
-      res = await rawRequest<T>(path, opts);
+      res = await rawRequest(path, opts);
     }
     if (res.status === 401) {
       if (typeof window !== "undefined") window.location.href = "/login";

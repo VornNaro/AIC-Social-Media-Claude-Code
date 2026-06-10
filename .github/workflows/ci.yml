@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend · pytest
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: socialhub
+          POSTGRES_PASSWORD: devpassword
+          POSTGRES_DB: socialhub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U socialhub"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # The Postgres service is reachable on localhost from the runner.
+      DATABASE_URL: postgresql+asyncpg://socialhub:devpassword@localhost:5432/socialhub
+      JWT_SECRET_KEY: ci-secret
+      JWT_REFRESH_SECRET_KEY: ci-secret-2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # host is 3.14, but the app targets 3.12 (asyncpg)
+      - name: Install backend (with dev extras)
+        working-directory: backend
+        run: pip install ".[dev]"
+      - name: Ruff
+        working-directory: backend
+        # Informational: the baseline carries known B008/F821 noise (idiomatic
+        # FastAPI Depends + SQLAlchemy forward refs), so this doesn't gate CI.
+        continue-on-error: true
+        run: ruff check app
+      - name: Pytest
+        working-directory: backend
+        run: pytest -q
+
+  frontend:
+    name: Frontend · lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  docker-build:
+    name: Build images
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'push' # validate Dockerfiles on main pushes only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          tags: schoolmate-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          tags: schoolmate-frontend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # To publish images (CD), add a job gated on `github.ref == 'refs/heads/main'`:
+  #   permissions: { packages: write }
+  #   - uses: docker/login-action@v3
+  #     with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+  #   then set push: true and tags: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
